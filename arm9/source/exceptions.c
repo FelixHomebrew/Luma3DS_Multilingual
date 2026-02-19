@@ -33,6 +33,8 @@
 #include "fmt.h"
 #include "buttons.h"
 #include "arm9_exception_handlers.h"
+#include "config.h"
+#include "lang9.h"
 
 // See https://github.com/LumaTeam/luma3ds_exception_dump_parser
 
@@ -60,11 +62,19 @@ void detectAndProcessExceptionDumps(void)
     const vu8 *stackDump = (vu8 *)regs + dumpHeader->registerDumpSize + dumpHeader->codeDumpSize;
     const vu8 *additionalData = stackDump + dumpHeader->stackDumpSize;
 
-    static const char *handledExceptionNames[] = {
-        "FIQ", "undefined instruction", "prefetch abort", "data abort"
+    // Reload config to could retrieve language (if avaiable)
+    // Without this, messages below will always display with default lang
+    readConfig();
+    lumaTranslLoad(configData.language);
+
+    const char *handledExceptionNames[] = {
+        lumaTranslGet(LLID_ERRFATAL_ERRNAME_FIQ),
+        lumaTranslGet(LLID_ERRFATAL_ERRNAME_UNDEFINST),
+        lumaTranslGet(LLID_ERRFATAL_ERRNAME_PREFABORT),
+        lumaTranslGet(LLID_ERRFATAL_ERRNAME_DATAABORT),
     },
                       *specialExceptions[] = {
-        "kernel panic", "svcBreak"
+        lumaTranslGet(LLID_ERRFATAL_ERSNAME_KRNLPANIC), "svcBreak"
     },
                       *registerNames[] = {
         "R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12",
@@ -85,10 +95,10 @@ void detectAndProcessExceptionDumps(void)
 
     initScreens();
 
-    drawString(true, 10, 10, COLOR_RED, "An exception occurred");
+    drawString(true, 10, 10, COLOR_RED, lumaTranslGet(LLID_ERRFATAL_TITLE));
     u32 posY;
-    if(dumpHeader->processor == 11) posY = drawFormattedString(true, 10, 30, COLOR_WHITE, "Processor:       Arm11 (core %u)", dumpHeader->core);
-    else posY = drawString(true, 10, 30, COLOR_WHITE, "Processor:       Arm9");
+    if(dumpHeader->processor == 11) posY = drawFormattedString(true, 10, 30, COLOR_WHITE, "%s Arm11 (%s %u)", lumaTranslGet(LLID_ERRFATAL_FIELD_PROC), lumaTranslGet(LLID_ERRFATAL_FIELD_CORE), dumpHeader->core);
+    else posY = drawString(true, 10, 30, COLOR_WHITE, "%s Arm9");
 
     if(dumpHeader->type == 2)
     {

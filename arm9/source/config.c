@@ -40,6 +40,7 @@
 #include "i2c.h"
 #include "ini.h"
 #include "firm.h"
+#include "lang9.h"
 
 #include "config_template_ini.h" // note that it has an extra NUL byte inserted
 
@@ -370,6 +371,13 @@ static int configIniHandler(void* user, const char* section, const char* name, c
             }
         }
 
+        // Arrow options displayed on the Luma3DS boot screen
+        if (strcmp(name, "language") == 0) {
+            strlcpy(cfg->language, value, 3);
+            cfg->language[2] = 0;
+            return 1;
+        }
+
         // Multi-choice options displayed on the Luma3DS boot screen
 
         if (strcmp(name, "default_emunand_number") == 0) {
@@ -663,6 +671,8 @@ static size_t saveLumaIniConfigToStr(char *out)
         lumaVerStr, lumaRevSuffixStr,
 
         (int)CONFIG_VERSIONMAJOR, (int)CONFIG_VERSIONMINOR,
+
+        cfg->language,
         (int)CONFIG(AUTOBOOTEMU), (int)CONFIG(LOADEXTFIRMSANDMODULES),
         (int)CONFIG(PATCHGAMES), (int)CONFIG(REDIRECTAPPTHREADS),
         (int)CONFIG(PATCHVERSTRING), (int)CONFIG(SHOWGBABOOT),
@@ -805,10 +815,18 @@ bool readConfig(void)
         configData.topScreenFilter.contrastEnc = 1 * FLOAT_CONV_MULT; // 1.0f
         configData.bottomScreenFilter = configData.topScreenFilter;
         configData.autobootTwlTitleId = AUTOBOOT_DEFAULT_TWL_TID;
+        lumaTranslLoad(lumaTranslBuiltinI);
         ret = false;
     }
     else
+    {
+        if (!lumaTranslHas(configData.language)) {
+            lumaTranslLoad(lumaTranslBuiltinI);
+        } else {
+            lumaTranslLoad(configData.language);
+        }
         ret = true;
+    }
 
     configData.bootConfig = configDataMcu.bootCfg;
     oldConfig = configData;
@@ -829,7 +847,7 @@ void writeConfig(bool isConfigOptions)
     else
     {
         updateMcu = !isConfigOptions && configData.bootConfig != oldConfig.bootConfig;
-        updateIni = isConfigOptions && (configData.config != oldConfig.config || configData.multiConfig != oldConfig.multiConfig);
+        updateIni = isConfigOptions && (configData.config != oldConfig.config || configData.multiConfig != oldConfig.multiConfig || strcmp(configData.language, oldConfig.language));
     }
 
     if (updateMcu)
@@ -839,118 +857,69 @@ void writeConfig(bool isConfigOptions)
         error("Error writing the configuration file");
 }
 
+static const char* getLanguage() {
+    return lumaTranslGet(LLID_PRETTY);
+}
+
+static void setLanguage() {
+    u8 cnt = lumaTranslCount();
+    Iso6391* lst = malloc(sizeof(Iso6391)*cnt);
+    lumaTranslList(lst, cnt);
+    for (u8 i = 0; i < cnt; i++) {
+        if (strcmp(lst[i], configData.language) == 0) {
+            lumaTranslLoad(lst[i >= cnt-1 ? 0 : i+1]);
+            break;
+        }
+    }
+    free(lst);
+}
+
 void configMenu(bool oldPinStatus, u32 oldPinMode)
 {
-    static const char *multiOptionsText[]  = { "Default EmuNAND: 1( ) 2( ) 3( ) 4( )",
-                                               "Screen brightness: 4( ) 3( ) 2( ) 1( )",
-                                               "Splash: Off( ) Before( ) After( ) payloads",
-                                               "PIN lock: Off( ) 4( ) 6( ) 8( ) digits",
-                                               "New 3DS CPU: Off( ) Clock( ) L2( ) Clock+L2( )",
-                                               "Hbmenu autoboot: Off( ) 3DS( ) DSi( )",
-                                             };
+    bool langSelect = false;
 
-    static const char *singleOptionsText[] = { "( ) Autoboot EmuNAND",
-                                               "( ) Enable loading external FIRMs and modules",
-                                               "( ) Enable game patching",
-                                               "( ) Redirect app. syscore threads to core2",
-                                               "( ) Show NAND or user string in System Settings",
-                                               "( ) Show GBA boot screen in patched AGB_FIRM",
+    resetUi:
 
-                                               // Should always be the last 2 entries
-                                               "\nBoot chainloader",
-                                               "Save and exit"
-                                             };
+    const char *multiOptionsText[]  = { lumaTranslGet(LLID_BOOTCFG_OPT_EMUNAUTOBOOT_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_BRIGHT_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_SPLASH_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_PINLOCK_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_NEWCPU_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_HBMAUTOBOOT_NAME),
+                                      };
 
-    static const char *optionsDescription[]  = { "Select the default EmuNAND.\n\n"
-                                                 "It will be booted when no directional\n"
-                                                 "pad buttons are pressed (Up/Right/Down\n"
-                                                 "/Left equal EmuNANDs 1/2/3/4).",
+    const char *selectOptionsText[] = { lumaTranslGet(LLID_BOOTCFG_OPT_LANGUAGE_NAME) };
 
-                                                 "Select the screen brightness.",
+    const char *singleOptionsText[] = { lumaTranslGet(LLID_BOOTCFG_OPT_DEFEMUNAND_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_EXTFIRMSMOD_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_PATCHING_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_THREADREDIRECT_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_NANDUSRSTR_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_GBASPLASH_NAME),
 
-                                                 "Enable splash screen support.\n\n"
-                                                 "\t* 'Before payloads' displays it\n"
-                                                 "before booting payloads\n"
-                                                 "(intended for splashes that display\n"
-                                                 "button hints).\n\n"
-                                                 "\t* 'After payloads' displays it\n"
-                                                 "afterwards.\n\n"
-                                                 "Edit the duration in config.ini (3s\n"
-                                                 "default).",
+                                        // Should always be the last 2 entries
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_BOOTCHAINLDR_NAME),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_SAVEEXIT_NAME)
+                                      };
+const char *optionsDescription[]  = {   lumaTranslGet(LLID_BOOTCFG_OPT_EMUNAUTOBOOT_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_BRIGHT_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_SPLASH_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_PINLOCK_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_NEWCPU_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_HBMAUTOBOOT_ABOUT),
 
-                                                 "Activate a PIN lock.\n\n"
-                                                 "The PIN will be asked each time\n"
-                                                 "Luma3DS boots.\n\n"
-                                                 "4, 6 or 8 digits can be selected.\n\n"
-                                                 "The ABXY buttons and the directional\n"
-                                                 "pad buttons can be used as keys.\n\n"
-                                                 "A message can also be displayed\n"
-                                                 "(refer to the wiki for instructions).",
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_LANGUAGE_ABOUT),
 
-                                                 "Select the New 3DS CPU mode.\n\n"
-                                                 "This won't apply to\n"
-                                                 "New 3DS exclusive/enhanced games.\n\n"
-                                                 "'Clock+L2' can cause issues with some\n"
-                                                 "games.",
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_DEFEMUNAND_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_EXTFIRMSMOD_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_PATCHING_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_THREADREDIRECT_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_NANDUSRSTR_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_GBASPLASH_ABOUT),
 
-                                                 "Enable autobooting into homebrew menu,\n"
-                                                 "either into 3DS or DSi mode.\n\n"
-                                                 "Autobooting into a gamecard title is\n"
-                                                 "not supported.\n\n"
-                                                 "Refer to the \"autoboot\" section in the\n"
-                                                 "configuration file to configure\n"
-                                                 "this feature.",
-
-                                                 "If enabled, an EmuNAND\n"
-                                                 "will be launched on boot.\n\n"
-                                                 "Otherwise, SysNAND will.\n\n"
-                                                 "Hold L on boot to switch NAND.\n\n"
-                                                 "To use a different EmuNAND from the\n"
-                                                 "default, hold a directional pad button\n"
-                                                 "(Up/Right/Down/Left equal EmuNANDs\n"
-                                                 "1/2/3/4).",
-
-                                                 "Enable loading external FIRMs and\n"
-                                                 "system modules.\n\n"
-                                                 "This isn't needed in most cases.\n\n"
-                                                 "Refer to the wiki for instructions.",
-
-                                                 "Enable overriding the region and\n"
-                                                 "language configuration and the usage\n"
-                                                 "of patched code binaries, exHeaders,\n"
-                                                 "IPS code patches and LayeredFS\n"
-                                                 "for specific games.\n\n"
-                                                 "Also makes certain DLCs for out-of-\n"
-                                                 "region games work.\n\n"
-                                                 "Refer to the wiki for instructions.",
-
-                                                 "Redirect app. threads that would spawn\n"
-                                                 "on core1, to core2 (which is an extra\n"
-                                                 "CPU core for applications that usually\n"
-                                                 "remains unused).\n\n"
-                                                 "This improves the performance of very\n"
-                                                 "demanding games (like Pok\x82mon US/UM)\n" // CP437
-                                                 "by about 10%. Can break some games\n"
-                                                 "and other applications.\n",
-
-                                                 "Enable showing the current NAND:\n\n"
-                                                 "\t* Sys  = SysNAND\n"
-                                                 "\t* Emu  = EmuNAND 1\n"
-                                                 "\t* EmuX = EmuNAND X\n\n"
-                                                 "or a user-defined custom string in\n"
-                                                 "System Settings.\n\n"
-                                                 "Refer to the wiki for instructions.",
-
-                                                 "Enable showing the GBA boot screen\n"
-                                                 "when booting GBA games.",
-
-                                                // Should always be the last 2 entries
-                                                "Boot to the Luma3DS chainloader menu.",
-
-                                                 "Save the changes and exit. To discard\n"
-                                                 "any changes press the POWER button.\n"
-                                                 "Use START as a shortcut to this entry."
-                                               };
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_BOOTCHAINLDR_ABOUT),
+                                        lumaTranslGet(LLID_BOOTCFG_OPT_SAVEEXIT_ABOUT)
+                                    };
 
     FirmwareSource nandType = FIRMWARE_SYSNAND;
     if(isSdMode)
@@ -976,6 +945,15 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
         // { .visible = true }, audio rerouting, hidden
     };
 
+    struct selectOption {
+        u32 posY;
+        bool visible;
+        const char* (*get)();
+        void (*set)();
+    } selectOptions[] = {
+        { .visible = true, .get = getLanguage, .set = setLanguage }
+    };
+
     struct singleOption {
         u32 posY;
         bool enabled;
@@ -993,11 +971,13 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
 
     //Calculate the amount of the various kinds of options and pre-select the first single one
     u32 multiOptionsAmount = sizeof(multiOptions) / sizeof(struct multiOption),
+        selectOptionsAmount = sizeof(selectOptions) / sizeof(struct selectOption),
         singleOptionsAmount = sizeof(singleOptions) / sizeof(struct singleOption),
-        totalIndexes = multiOptionsAmount + singleOptionsAmount - 1,
+        totalIndexes = multiOptionsAmount + selectOptionsAmount + singleOptionsAmount - 1,
         selectedOption = 0,
+        selectSelected = 0,
         singleSelected = 0;
-    bool isMultiOption = false;
+    bool isSelectOption = false, isMultiOption = false;
 
     //Parse the existing options
     for(u32 i = 0; i < multiOptionsAmount; i++)
@@ -1020,9 +1000,9 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
                                        "FIRM0",
                                        "FIRM1" };
 
-    drawString(true, 10, 10, COLOR_TITLE, CONFIG_TITLE);
-    drawString(true, 10, 10 + SPACING_Y, COLOR_TITLE, "Use the DPAD and A to change settings");
-    drawFormattedString(false, 10, SCREEN_HEIGHT - 2 * SPACING_Y, COLOR_YELLOW, "Booted from %s via %s", isSdMode ? "SD" : "CTRNAND", bootTypes[(u32)bootType]);
+    drawFormattedString(true, 10, 10, COLOR_TITLE, lumaTranslGet(LLID_BOOTCFG_TITLE), CONFIG_TITLE);
+    drawString(true, 10, 10 + SPACING_Y, COLOR_TITLE, lumaTranslGet(LLID_BOOTCFG_SUBTITLE));
+    drawFormattedString(false, 10, SCREEN_HEIGHT - 2 * SPACING_Y, COLOR_YELLOW, lumaTranslGet(LLID_BOOTCFG_BOOTINFO), isSdMode ? "SD" : "CTRNAND", bootTypes[(u32)bootType]);
 
     //Character to display a selected option
     char selected = 'x';
@@ -1041,8 +1021,26 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
 
     endPos += SPACING_Y / 2;
 
+    //Display all the select options in white except on UI reload
+    for(u32 i = 0, color = COLOR_WHITE; i < selectOptionsAmount; i++)
+    {
+        if(!selectOptions[i].visible) continue;
+
+        if (langSelect && !i) {
+            selectSelected = i;
+            selectedOption = i + multiOptionsAmount;
+            isSelectOption = true;
+            color = COLOR_RED;
+        }
+
+        selectOptions[i].posY = endPos + SPACING_Y;
+        endPos = drawFormattedString(true, 10, selectOptions[i].posY, color, selectOptionsText[i], selectOptions[i].get());
+    }
+
+    endPos += SPACING_Y / 2;
+
     //Display all the normal options in white except for the first one
-    for(u32 i = 0, color = COLOR_RED; i < singleOptionsAmount; i++)
+    for(u32 i = 0, color = langSelect ? COLOR_WHITE : COLOR_RED; i < singleOptionsAmount; i++)
     {
         if(!singleOptions[i].visible) continue;
 
@@ -1053,12 +1051,14 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
         if(color == COLOR_RED)
         {
             singleSelected = i;
-            selectedOption = i + multiOptionsAmount;
+            selectedOption = i + multiOptionsAmount + selectOptionsAmount;
             color = COLOR_WHITE;
         }
     }
 
     drawString(false, 10, 10, COLOR_WHITE, optionsDescription[selectedOption]);
+
+    if (langSelect) langSelect = false;
 
     bool startPressed = false;
     //Boring configuration menu
@@ -1112,15 +1112,26 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
                     if(!multiOptions[selectedOption].visible) continue;
 
                     isMultiOption = true;
+                    isSelectOption = false;
+                    break;
+                }
+                else if(selectedOption < multiOptionsAmount + selectOptionsAmount)
+                {
+                    selectSelected = selectedOption - multiOptionsAmount;
+                    if(!selectOptions[selectSelected].visible) continue;
+
+                    isMultiOption = false;
+                    isSelectOption = true;
                     break;
                 }
                 else
                 {
-                    singleSelected = selectedOption - multiOptionsAmount;
+                    singleSelected = selectedOption - multiOptionsAmount - selectOptionsAmount;
 
                     if(!singleOptions[singleSelected].visible) continue;
 
                     isMultiOption = false;
+                    isSelectOption = false;
                     break;
                 }
             }
@@ -1133,14 +1144,20 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
                 drawString(true, 10, multiOptions[oldSelectedOption].posY, COLOR_WHITE, multiOptionsText[oldSelectedOption]);
                 drawCharacter(true, 10 + multiOptions[oldSelectedOption].posXs[multiOptions[oldSelectedOption].enabled] * SPACING_X, multiOptions[oldSelectedOption].posY, COLOR_WHITE, selected);
             }
+            else if (oldSelectedOption < multiOptionsAmount + selectOptionsAmount)
+            {
+                u32 selectOldSelected = oldSelectedOption - multiOptionsAmount;
+                drawFormattedString(true, 10, selectOptions[selectOldSelected].posY, COLOR_WHITE, selectOptionsText[selectOldSelected], selectOptions[selectOldSelected].get());
+            }
             else
             {
-                u32 singleOldSelected = oldSelectedOption - multiOptionsAmount;
+                u32 singleOldSelected = oldSelectedOption - multiOptionsAmount - selectOptionsAmount;
                 drawString(true, 10, singleOptions[singleOldSelected].posY, COLOR_WHITE, singleOptionsText[singleOldSelected]);
                 if(singleOptions[singleOldSelected].enabled) drawCharacter(true, 10 + SPACING_X, singleOptions[singleOldSelected].posY, COLOR_WHITE, selected);
             }
 
             if(isMultiOption) drawString(true, 10, multiOptions[selectedOption].posY, COLOR_RED, multiOptionsText[selectedOption]);
+            else if (isSelectOption) drawFormattedString(true, 10, selectOptions[selectSelected].posY, COLOR_RED, selectOptionsText[selectSelected], selectOptions[selectSelected].get());
             else drawString(true, 10, singleOptions[singleSelected].posY, COLOR_RED, singleOptionsText[singleSelected]);
 
             drawString(false, 10, 10, COLOR_BLACK, optionsDescription[oldSelectedOption]);
@@ -1156,6 +1173,16 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
                 multiOptions[selectedOption].enabled = (oldEnabled == 3 || !multiOptions[selectedOption].posXs[oldEnabled + 1]) ? 0 : oldEnabled + 1;
 
                 if(selectedOption == BRIGHTNESS) updateBrightness(multiOptions[BRIGHTNESS].enabled);
+            }
+            else if (isSelectOption)
+            {
+                drawFormattedString(true, 10, selectOptions[selectSelected].posY, COLOR_BLACK, selectOptionsText[selectSelected], selectOptions[selectSelected].get());
+                selectOptions[selectSelected].set();
+                // Reload UI
+                langSelect = true;
+                goto saveCfgData; retLangSelect:
+                clearScreens(false);
+                goto resetUi;
             }
             else
             {
@@ -1184,6 +1211,7 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
         else if(singleOptions[singleSelected].enabled && singleOptionsText[singleSelected][0] == '(') drawCharacter(true, 10 + SPACING_X, singleOptions[singleSelected].posY, COLOR_RED, selected);
     }
 
+    saveCfgData:
     //Parse and write the new configuration
     configData.multiConfig = 0;
     for(u32 i = 0; i < multiOptionsAmount; i++)
@@ -1192,6 +1220,8 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
     configData.config &= ~((1 << (u32)NUMCONFIGURABLE) - 1);
     for(u32 i = 0; i < singleOptionsAmount; i++)
         configData.config |= (singleOptions[i].enabled ? 1 : 0) << i;
+
+    if (langSelect) goto retLangSelect;
 
     writeConfig(true);
 

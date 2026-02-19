@@ -1,4 +1,8 @@
-# Luma3DS
+# Work in progress
+**This feature is currently not done yet and is in experimental phase.**<br>
+For now, it is only able to translate UIs from ARM9, including boot configuration and chainloader menus. Rosalina isn't yet integrated into the translation framework.
+
+___
 
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/LumaTeam/Luma3DS/total)
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)

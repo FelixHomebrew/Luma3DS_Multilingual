@@ -70,6 +70,8 @@ typedef struct ScreenFiltersCfgData {
     s64 brightnessEnc;
 } ScreenFiltersCfgData;
 
+typedef char Iso6391[3];
+
 typedef struct CfgData {
     u16 formatVersionMajor, formatVersionMinor;
 
@@ -87,6 +89,8 @@ typedef struct CfgData {
 
     u64 autobootTwlTitleId;
     u8 autobootCtrAppmemtype;
+
+    Iso6391 language;
 } CfgData;
 
 typedef struct
