@@ -38,6 +38,8 @@
 #include "pin.h"
 #include "crypto.h"
 
+#include "lang9.h"
+
 static char pinKeyToLetter(u32 pressed)
 {
     static const char *keys = "AB--RLUD--XY";
@@ -54,10 +56,12 @@ void newPin(bool allowSkipping, u32 pinMode)
 
     u8 length = 4 + 2 * (pinMode - 1);
 
-    drawString(true, 10, 10, COLOR_TITLE, "Enter a new PIN using ABXY and the DPad");
-    drawString(true, 10, 10 + SPACING_Y, COLOR_TITLE, allowSkipping ? "Press START to skip, SELECT to reset" : "Press SELECT to reset");
+    drawString(true, 10, 10, COLOR_TITLE, lumaTranslGet(LLID_BOOTPIN_NEW_HINT));
+    drawString(true, 10, 10 + SPACING_Y, COLOR_TITLE, allowSkipping ? lumaTranslGet(LLID_BOOTPIN_NEW_SKIP) : lumaTranslGet(LLID_BOOTPIN_NEW_RESET));
 
-    drawFormattedString(true, 10, 10 + 3 * SPACING_Y, COLOR_WHITE, "PIN (%u digits): ", length);
+    const char* commonFmt = lumaTranslGet(LLID_BOOTPIN_COMMON_FORMAT);
+    u16 pswdX = strlen(commonFmt);
+    drawFormattedString(true, 10, 10 + 3 * SPACING_Y, COLOR_WHITE, commonFmt, length);
 
     //Pad to AES block length with zeroes
     __attribute__((aligned(4))) u8 enteredPassword[AES_BLOCK_SIZE] = {0};
@@ -70,7 +74,7 @@ void newPin(bool allowSkipping, u32 pinMode)
         if(reset)
         {
             for(u32 i = 0; i < cnt; i++)
-                drawCharacter(true, 10 + (16 + 2 * i) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_BLACK, (char)enteredPassword[i]);
+                drawCharacter(true, 10 + (pswdX + 2 * i) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_BLACK, (char)enteredPassword[i]);
 
             cnt = 0;
             reset = false;
@@ -100,7 +104,7 @@ void newPin(bool allowSkipping, u32 pinMode)
         enteredPassword[cnt] = (u8)pinKeyToLetter(pressed);
 
         //Visualize character on screen
-        drawCharacter(true, 10 + (16 + 2 * cnt) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_WHITE, enteredPassword[cnt]);
+        drawCharacter(true, 10 + (pswdX + 2 * cnt) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_WHITE, enteredPassword[cnt]);
 
         cnt++;
     }
@@ -122,7 +126,7 @@ void newPin(bool allowSkipping, u32 pinMode)
     memcpy(pin.hash, tmp, sizeof(tmp));
 
     if(!fileWrite(&pin, PIN_FILE, sizeof(PinData)))
-        error("Error writing the PIN file");
+        error(lumaTranslGet(LLID_BOOTPIN_NEW_ERROR));
 }
 
 bool verifyPin(u32 pinMode)
@@ -148,10 +152,12 @@ bool verifyPin(u32 pinMode)
 
     swapFramebuffers(true);
 
-    drawString(true, 10, 10, COLOR_TITLE, "Enter the PIN using ABXY and the DPad to proceed");
-    drawString(true, 10, 10 + SPACING_Y, COLOR_TITLE, "Press START to shutdown, SELECT to clear");
+    drawString(true, 10, 10, COLOR_TITLE, lumaTranslGet(LLID_BOOTPIN_VERIFY_HINT));
+    drawString(true, 10, 10 + SPACING_Y, COLOR_TITLE, lumaTranslGet(LLID_BOOTPIN_VERIFY_CLEAR));
 
-    drawFormattedString(true, 10, 10 + 3 * SPACING_Y, COLOR_WHITE, "PIN (%u digits): ", lengthBlock[0]);
+    const char* commonFmt = lumaTranslGet(LLID_BOOTPIN_COMMON_FORMAT);
+    u16 pswdX = strlen(commonFmt);
+    drawFormattedString(true, 10, 10 + 3 * SPACING_Y, COLOR_WHITE, commonFmt, lengthBlock[0]);
 
     bool isBottomSplashValid = getFileSize("splashpin.bin") == SCREEN_BOTTOM_FBSIZE;
     if(isBottomSplashValid)
@@ -185,7 +191,7 @@ bool verifyPin(u32 pinMode)
         if(reset)
         {
             for(u32 i = 0; i < cnt; i++)
-                drawCharacter(true, 10 + (16 + 2 * i) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_BLACK, '*');
+                drawCharacter(true, 10 + (pswdX + 2 * i) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_BLACK, '*');
 
             cnt = 0;
             reset = false;
@@ -214,7 +220,7 @@ bool verifyPin(u32 pinMode)
         enteredPassword[cnt] = (u8)pinKeyToLetter(pressed);
 
         //Visualize character on screen
-        drawCharacter(true, 10 + (16 + 2 * cnt) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_WHITE, '*');
+        drawCharacter(true, 10 + (pswdX + 2 * cnt) * SPACING_X, 10 + 3 * SPACING_Y, COLOR_WHITE, '*');
 
         if(++cnt < lengthBlock[0]) continue;
 
@@ -225,7 +231,7 @@ bool verifyPin(u32 pinMode)
         {
             reset = true;
 
-            drawString(true, 10, 10 + 5 * SPACING_Y, COLOR_RED, "Wrong PIN, try again");
+            drawString(true, 10, 10 + 5 * SPACING_Y, COLOR_RED, lumaTranslGet(LLID_BOOTPIN_VERIFY_ERROR));
         }
     }
 

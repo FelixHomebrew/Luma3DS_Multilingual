@@ -52,6 +52,16 @@ void installArm9Handlers(void)
     }
 }
 
+static char* strrpad(const char*  src, u8 cnt) {
+    static char buf[0xFF];
+    const u8 srcLen = strlen(src);
+    memset(buf, 0, sizeof(buf));
+    memset(buf, ' ', cnt);
+    memcpy(buf, src, srcLen);
+    buf[cnt] = '\0';
+    return buf;
+}
+
 void detectAndProcessExceptionDumps(void)
 {
     volatile ExceptionDumpHeader *dumpHeader = (volatile ExceptionDumpHeader *)0x25000000;
@@ -68,7 +78,7 @@ void detectAndProcessExceptionDumps(void)
     lumaTranslLoad(configData.language);
 
     const char *handledExceptionNames[] = {
-        lumaTranslGet(LLID_ERRFATAL_ERRNAME_FIQ),
+        "FIQ",
         lumaTranslGet(LLID_ERRFATAL_ERRNAME_UNDEFINST),
         lumaTranslGet(LLID_ERRFATAL_ERRNAME_PREFABORT),
         lumaTranslGet(LLID_ERRFATAL_ERRNAME_DATAABORT),
@@ -95,36 +105,43 @@ void detectAndProcessExceptionDumps(void)
 
     initScreens();
 
+    u16 fieldLen = 0;
+    for (u32 i = LLID_ERRFATAL_FIELD_PROCESSOR; i <= LLID_ERRFATAL_FIELD_CURPROCESS; i++) {
+        u16 cLen = strlen(lumaTranslGet(i));
+        if (cLen > fieldLen) fieldLen = cLen;
+    }
+
     drawString(true, 10, 10, COLOR_RED, lumaTranslGet(LLID_ERRFATAL_TITLE));
     u32 posY;
-    if(dumpHeader->processor == 11) posY = drawFormattedString(true, 10, 30, COLOR_WHITE, "%s Arm11 (%s %u)", lumaTranslGet(LLID_ERRFATAL_FIELD_PROC), lumaTranslGet(LLID_ERRFATAL_FIELD_CORE), dumpHeader->core);
+    if(dumpHeader->processor == 11) posY = drawFormattedString(true, 10, 30, COLOR_WHITE, "%s Arm11 (%s %u)", strrpad(lumaTranslGet(LLID_ERRFATAL_FIELD_PROCESSOR), fieldLen), lumaTranslGet(LLID_ERRFATAL_GWORD_CORE), dumpHeader->core);
     else posY = drawString(true, 10, 30, COLOR_WHITE, "%s Arm9");
 
+    const char* exceptionTypeStr = strrpad(lumaTranslGet(LLID_ERRFATAL_FIELD_EXCTYPE), fieldLen);
     if(dumpHeader->type == 2)
     {
         if((regs[16] & 0x20) == 0 && dumpHeader->codeDumpSize >= 4)
         {
             u32 instr = *(vu32 *)(stackDump - 4);
             if(instr == 0xE12FFF7E)
-                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Exception type:  %s (%s)", handledExceptionNames[dumpHeader->type], specialExceptions[0]);
+                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s %s (%s)", exceptionTypeStr, handledExceptionNames[dumpHeader->type], specialExceptions[0]);
             else if(instr == 0xEF00003C)
-                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Exception type:  %s (%s)", handledExceptionNames[dumpHeader->type], specialExceptions[1]);
+                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s %s (%s)", exceptionTypeStr, handledExceptionNames[dumpHeader->type], specialExceptions[1]);
             else
-                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Exception type:  %s", handledExceptionNames[dumpHeader->type]);
+                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s %s", exceptionTypeStr, handledExceptionNames[dumpHeader->type]);
         }
         else if((regs[16] & 0x20) != 0 && dumpHeader->codeDumpSize >= 2)
         {
             u16 instr = *(vu16 *)(stackDump - 2);
             if(instr == 0xDF3C)
-                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Exception type:  %s (%s)", handledExceptionNames[dumpHeader->type], specialExceptions[0]);
+                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s %s (%s)", exceptionTypeStr, handledExceptionNames[dumpHeader->type], specialExceptions[0]);
             else
-                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Exception type:  %s", handledExceptionNames[dumpHeader->type]);
+                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s %s", exceptionTypeStr, handledExceptionNames[dumpHeader->type]);
         }
         else
-            posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Exception type:  %s", handledExceptionNames[dumpHeader->type]);
+            posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s %s", exceptionTypeStr, handledExceptionNames[dumpHeader->type]);
     }
     else
-        posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Exception type:  %s", handledExceptionNames[dumpHeader->type]);
+        posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s %s", exceptionTypeStr, handledExceptionNames[dumpHeader->type]);
 
     if(dumpHeader->processor == 11 && dumpHeader->type >= 2)
     {
@@ -133,7 +150,7 @@ void detectAndProcessExceptionDumps(void)
         for(u32 i = 0; i < 15; i++)
             if(xfsr == faultStatusValues[i])
             {
-                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Fault status:    %s", faultStatusNames[i]);
+                posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s %s", strrpad(lumaTranslGet(LLID_ERRFATAL_FIELD_FAULTSTATUS), fieldLen), faultStatusNames[i]);
                 break;
             }
     }
@@ -143,10 +160,10 @@ void detectAndProcessExceptionDumps(void)
         u32 size = dumpHeader->additionalDataSize;
         if(dumpHeader->processor == 11)
             posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE,
-                                    "Current process: %.8s (%016llX)", (const char *)additionalData, *(vu64 *)(additionalData + 8));
+                                    "%s %.8s (%016llX)", strrpad(lumaTranslGet(LLID_ERRFATAL_FIELD_CURPROCESS), fieldLen), (const char *)additionalData, *(vu64 *)(additionalData + 8));
         else
             posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE,
-                                    "Arm9 memory dump at offset %X size %lX", (uintptr_t)additionalData - (uintptr_t)dumpHeader, size);
+                                    lumaTranslGet(LLID_ERRFATAL_INFO_ARM9MEMDUMP), (uintptr_t)additionalData - (uintptr_t)dumpHeader, size);
     }
     posY += SPACING_Y;
 
@@ -161,15 +178,15 @@ void detectAndProcessExceptionDumps(void)
     }
 
     if(dumpHeader->processor == 11 && dumpHeader->type == 3)
-        posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%-7s%08lX       Access type: %s", "FAR", regs[19], regs[17] & (1u << 11) ? "Write" : "Read");
+        posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%-7s%08lX       %s %s", "FAR", regs[19], lumaTranslGet(LLID_ERRFATAL_BFIELD_ACCESSTYPE), regs[17] & (1u << 11) ? lumaTranslGet(LLID_ERRFATAL_GWORD_WRITE) : lumaTranslGet(LLID_ERRFATAL_GWORD_READ));
 
     posY += SPACING_Y;
 
     u32 mode = regs[16] & 0xF;
     if(dumpHeader->type == 3 && (mode == 7 || mode == 11))
-        posY = drawString(true, 10, posY + SPACING_Y, COLOR_YELLOW, "Incorrect dump: failed to dump code and/or stack") + SPACING_Y;
+        posY = drawString(true, 10, posY + SPACING_Y, COLOR_YELLOW, lumaTranslGet(LLID_ERRFATAL_INFO_INCORRDUMP)) + SPACING_Y;
 
-    u32 posYBottom = drawString(false, 10, 10, COLOR_WHITE, "Stack dump:") + SPACING_Y;
+    u32 posYBottom = drawString(false, 10, 10, COLOR_WHITE, lumaTranslGet(LLID_ERRFATAL_BFIELD_STACKDUMP)) + SPACING_Y;
 
     for(u32 line = 0; line < 19 && stackDump < additionalData; line++)
     {
@@ -179,7 +196,10 @@ void detectAndProcessExceptionDumps(void)
             drawFormattedString(false, 10 + 10 * SPACING_X + 3 * i * SPACING_X, posYBottom, COLOR_WHITE, "%02X", *stackDump);
     }
 
-    static const char *choiceMessage[] = {"Press A to save the crash dump", "Press any other button to shutdown"};
+    const char *choiceMessage[] = {
+        lumaTranslGet(LLID_ERRFATAL_INFO_DUMPSAVE),
+        lumaTranslGet(LLID_ERRFATAL_INFO_DUMPIGNORE)
+    };
 
     drawString(true, 10, posY + SPACING_Y, COLOR_WHITE, choiceMessage[0]);
     drawString(true, 10, posY + SPACING_Y + SPACING_Y , COLOR_WHITE, choiceMessage[1]);
@@ -199,12 +219,12 @@ void detectAndProcessExceptionDumps(void)
 
     if(fileWrite((void *)dumpHeader, path, dumpHeader->totalSize))
     {
-        posY = drawString(true, 10, posY + SPACING_Y, COLOR_WHITE, "You can find the dump in the following file:");
+        posY = drawString(true, 10, posY + SPACING_Y, COLOR_WHITE, lumaTranslGet(LLID_ERRFATAL_INFO_DUMPRESYES));
         posY = drawFormattedString(true, 10, posY + SPACING_Y, COLOR_WHITE, "%s:/luma/%s", isSdMode ? "SD" : "CTRNAND", path) + SPACING_Y;
     }
-    else posY = drawString(true, 10, posY + SPACING_Y, COLOR_RED, "Error writing the dump file");
+    else posY = drawString(true, 10, posY + SPACING_Y, COLOR_RED, lumaTranslGet(LLID_ERRFATAL_INFO_DUMPRESNO));
 
-    drawString(true, 10, posY + SPACING_Y, COLOR_WHITE, "Press any button to shutdown");
+    drawString(true, 10, posY + SPACING_Y, COLOR_WHITE, lumaTranslGet(LLID_ERRFATAL_INFO_GOODBYE));
 
     waitInput(false);
 

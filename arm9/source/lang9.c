@@ -72,21 +72,50 @@ static const char* llidTable[] = {
 
     //----------------------------------------//
 
+    "BOOTPIN_COMMON_FORMAT",
+
+    "BOOTPIN_NEW_HINT",
+    "BOOTPIN_NEW_SKIP",
+    "BOOTPIN_NEW_RESET",
+    "BOOTPIN_NEW_ERROR",
+
+    "BOOTPIN_VERIFY_HINT",
+    "BOOTPIN_VERIFY_CLEAR",
+    "BOOTPIN_VERIFY_ERROR",
+
+    //----------------------------------------//
+
     "ERRFATAL_TITLE",
 
-    "ERRFATAL_ERRNAME_FIQ",
     "ERRFATAL_ERRNAME_UNDEFINST",
     "ERRFATAL_ERRNAME_PREFABORT",
     "ERRFATAL_ERRNAME_DATAABORT",
     "ERRFATAL_ERSNAME_KRNLPANIC",
 
-    "ERRFATAL_FIELD_PROC",
-    "ERRFATAL_FIELD_CORE"
-};
+    "ERRFATAL_FIELD_PROCESSOR",
+    "ERRFATAL_FIELD_EXCTYPE",
+    "ERRFATAL_FIELD_FAULTSTATUS",
+    "ERRFATAL_FIELD_CURPROCESS",
 
+    "ERRFATAL_BFIELD_ACCESSTYPE",
+    "ERRFATAL_BFIELD_STACKDUMP",
+
+    "ERRFATAL_GWORD_CORE",
+    "ERRFATAL_GWORD_READ",
+    "ERRFATAL_GWORD_WRITE",
+
+    "ERRFATAL_INFO_ARM9MEMDUMP",
+    "ERRFATAL_INFO_INCORRDUMP",
+    "ERRFATAL_INFO_DUMPSAVE",
+    "ERRFATAL_INFO_DUMPIGNORE",
+    "ERRFATAL_INFO_DUMPRESYES",
+    "ERRFATAL_INFO_DUMPRESNO",
+    "ERRFATAL_INFO_GOODBYE",
+};
+//^([A-Z9_]+)=.*$
 // Built-in language (english by default)
 const Iso6391 lumaTranslBuiltinI = "en";
-char* lumaTranslBuiltinV[] = {
+static char* lumaTranslBuiltinV[] = {
     "English",
 
     //----------------------------------------//
@@ -210,16 +239,45 @@ char* lumaTranslBuiltinV[] = {
 
     //----------------------------------------//
 
+    "PIN (%u digits):",
+
+    "Enter a new PIN using ABXY and the DPad",
+    "Press START to skip, SELECT to reset",
+    "Press SELECT to reset",
+    "Error writing the PIN file",
+
+    "Enter the PIN using ABXY and the DPad to proceed",
+    "Press START to shutdown, SELECT to clear",
+    "Wrong PIN, try again",
+
+    //----------------------------------------//
+
     "An exception occurred",
 
-    "FIQ",
     "undefined instruction",
     "prefetch abort",
     "data abort",
     "kernel panic",
 
-    "Processor:      ",
-    "core"
+    "Processor:",
+    "Exception type:",
+    "Fault status:",
+    "Current process:",
+
+    "Access type:",
+    "Stack dump:",
+
+    "core",
+    "Read",
+    "Write",
+
+    "Arm9 memory dump at offset %X size %lX",
+    "Incorrect dump: failed to dump code and/or stack",
+    "Press A to save the crash dump",
+    "Press any other button to shutdown",
+    "You can find the dump in the following file:",
+    "Error writing the dump file",
+    "Press any button to shutdown"
 };
 
 // Current strings
