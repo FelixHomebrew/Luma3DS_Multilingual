@@ -14,7 +14,7 @@
 #include "string.h"
 
 #define STRCOUNT (sizeof(llidTable)/sizeof(llidTable[0]))
-#define MAX_INILANG_SIZE 4096
+#define MAX_INILANG_SIZE 0x7FFF
 
 #define LANGS_DIR "langs"
 
@@ -65,6 +65,10 @@ static const char* llidTable[] = {
     "BOOTCFG_OPT_BOOTCHAINLDR_ABOUT",
     "BOOTCFG_OPT_SAVEEXIT_ABOUT",
 
+    "BOOTCFG_ERROR_OVERFLOW",
+    "BOOTCFG_ERROR_SAVE",
+    "BOOTCFG_ERROR_PINDEL",
+
     //----------------------------------------//
 
     "CHAINLDR_TITLE",
@@ -82,6 +86,42 @@ static const char* llidTable[] = {
     "BOOTPIN_VERIFY_HINT",
     "BOOTPIN_VERIFY_CLEAR",
     "BOOTPIN_VERIFY_ERROR",
+
+    //----------------------------------------//
+
+    "ERRGEN_TITLE",
+    "ERRGEN_FOOTER",
+    
+    "ERRGEN_MISC_CRYPTO_ARM9DECRY",
+    
+    "ERRGEN_MISC_FIRM_EXTFIRM",
+    "ERRGEN_MISC_FIRM_CERTKMC",
+    "ERRGEN_MISC_FIRM_FIRMDECRY",
+    "ERRGEN_MISC_FIRM_EXTFIRMINVCOR",
+    "ERRGEN_MISC_FIRM_CTRNANDLOAD",
+    "ERRGEN_MISC_FIRM_CTRNANDUNKN", "ERRGEN_MISC_FIRM_CTRNANDUNKN_EXT", "ERRGEN_MISC_FIRM_CTRNANDUNKN_CTRNAND",
+    "ERRGEN_MISC_FIRM_INVEMUNAND",
+    "ERRGEN_MISC_FIRM_SAFEMODE",
+    "ERRGEN_MISC_FIRM_INVPAYLOAD",
+    "ERRGEN_MISC_FIRM_FIRMMODTOOLARGE",
+    "ERRGEN_MISC_FIRM_FIRMMODLAYOUT",
+    "ERRGEN_MISC_FIRM_FIRMMODINVCOR",
+    "ERRGEN_MISC_FIRM_SYSMODULES",
+
+    "ERRGEN_MISC_FS_MKDIRLUMA",
+
+    "ERRGEN_MISC_MAIN_MCUFWWRONG",
+    "ERRGEN_MISC_MAIN_LOADERWRONG",
+    "ERRGEN_MISC_MAIN_MOUNTFAIL",
+    "ERRGEN_MISC_MAIN_MOUNTFAIL_SD",
+    "ERRGEN_MISC_MAIN_MOUNTFAIL_CTRNAND",
+    "ERRGEN_MISC_MAIN_MOUNTFAIL_BOTH",
+    "ERRGEN_MISC_MAIN_LAUNCHLCWRONG",
+    "ERRGEN_MISC_MAIN_SDLOCKED",
+    "ERRGEN_MISC_MAIN_FIRMPATCHES",
+
+    "ERRGEN_MISC_PATCHES_GETPROC9",
+    "ERRGEN_MISC_PATCHES_GETK11",
 
     //----------------------------------------//
 
@@ -232,6 +272,10 @@ static char* lumaTranslBuiltinV[] = {
     "any changes press the POWER button.\n"
     "Use START as a shortcut to this entry.",
 
+    "Configuration data buffer overflow, please report this issue",
+    "Error writing the configuration file",
+    "Unable to delete PIN file",
+
     //----------------------------------------//
 
     "Luma3DS chainloader",
@@ -249,6 +293,39 @@ static char* lumaTranslBuiltinV[] = {
     "Enter the PIN using ABXY and the DPad to proceed",
     "Press START to shutdown, SELECT to clear",
     "Wrong PIN, try again",
+
+    //----------------------------------------//
+
+    "An error has occurred:",
+    "Press any button to shutdown",
+
+    "Failed to decrypt the Arm9 binary.",
+
+    "The external FIRM is not valid.",
+    "The cetk is missing or corrupted.",
+    "Unable to decrypt the external FIRM.",
+    "The external FIRM is invalid or corrupted.",
+    "Unable to mount CTRNAND or load the CTRNAND FIRM.\nPlease use an external one.",
+    "The %s FIRM is not for this console.", "external", "CTRNAND",
+    "An old unsupported EmuNAND has been detected.\nLuma3DS is unable to boot it.",
+    "SAFE_MODE is not supported on 1.x/2.x FIRM.",
+    "The payload is invalid or corrupted.",
+    "The external FIRM modules are too large.",
+    "One of the external FIRM modules have invalid layout.",
+    "An external FIRM module is invalid or corrupted.",
+    "Failed to load sysmodules",
+
+    "Failed to create luma directory.",
+
+    "Unsupported MCU FW version %d.%d.",
+    "Launched using an unsupported loader.",
+    "Failed to mount %s.", "SD", "CTRNAND", "SD and CTRNAND",
+    "Launched from an unsupported location: %s.",
+    "The SD card is locked, EmuNAND can not be used.\nPlease turn the write protection switch off.",
+    "Failed to apply %u FIRM patch(es).",
+
+    "Failed to get Process9 data.",
+    "Failed to get Kernel11 data.",
 
     //----------------------------------------//
 
@@ -354,7 +431,7 @@ static int iniHandler(void* user, const char* section, const char* name, const c
             }
         }
     }
-    return 0;
+    return 1;
 }
 
 void lumaTranslLoad(const Iso6391 lang) {
@@ -401,11 +478,17 @@ void lumaTranslLoad(const Iso6391 lang) {
                 (u8)i, (char)i, (u8)i+1, (char)i+1
             )
         }*/
-        if (lumaTranslCurrent) free(lumaTranslCurrent);
+
+        if (lumaTranslCurrent) {
+            for (u8 i = 0; i < STRCOUNT; i++) {
+                if (lumaTranslCurrent[i]) free(lumaTranslCurrent[i]);
+            }
+            free(lumaTranslCurrent);
+        }
         lumaTranslCurrent = (char**)calloc(STRCOUNT, sizeof(char*));
 
         for (u8 i = 0; i < STRCOUNT; i++) {
-            if (lumaTranslCurrent[i]) free(lumaTranslCurrent[i]);
+            //if (lumaTranslCurrent[i]) free(lumaTranslCurrent[i]);
             lumaTranslCurrent[i] = malloc(10);
             strcpy(lumaTranslCurrent[i], "<UNKNOWN>");
         }
@@ -417,7 +500,7 @@ void lumaTranslLoad(const Iso6391 lang) {
 }
 
 const char* lumaTranslGet(const LumaLocaleId l2id) {
-    if (!lumaTranslCurrent) return "<UNLOADED>";
+    if (!lumaTranslCurrent) return lumaTranslBuiltinV[l2id];
     if (!lumaTranslCurrent[l2id]) return "<NULL>";
     return lumaTranslCurrent[l2id];
 

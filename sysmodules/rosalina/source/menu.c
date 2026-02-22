@@ -40,6 +40,14 @@
 #include "menus/screen_filters.h"
 #include "shell.h"
 
+#include "menus/process_list.h"
+#include "menus/n3ds.h"
+#include "menus/debugger.h"
+#include "menus/miscellaneous.h"
+#include "menus/sysconfig.h"
+#include "menus/screen_filters.h"
+#include "lang11.h"
+
 //#define ROSALINA_MENU_SELF_SCREENSHOT 1 // uncomment this to enable the feature
 
 u32 menuCombo = 0;
@@ -365,6 +373,30 @@ void menuThreadMain(void)
 
     hidInit(); // assume this doesn't fail
     isHidInitialized = true;
+
+    Lang11_Init();
+    Menu rosalinaMenuTmp = {
+        Lang11_Get(SID_MENU_ROOT_TITLE),
+        {
+            { Lang11_Get(SID_MENU_ROOT_ENTRY_SCREENSHOT), METHOD, .method = &RosalinaMenu_TakeScreenshot },
+            { Lang11_Get(SID_MENU_ROOT_ENTRY_SCREENFILTERS), MENU, .menu = &screenFiltersMenu },
+            { Lang11_Get(SID_MENU_ROOT_ENTRY_CHEATS), METHOD, .method = &RosalinaMenu_Cheats },
+            { "", METHOD, .method = PluginLoader__MenuCallback},
+            { Lang11_Get(SID_MENU_ROOT_ENTRY_NEW3DS), MENU, .menu = &N3DSMenu, .visibility = &menuCheckN3ds },
+            { "Process list", METHOD, .method = &RosalinaMenu_ProcessList },
+            { "Debugger options...", MENU, .menu = &debuggerMenu },
+            { "System configuration...", MENU, .menu = &sysconfigMenu },
+            { "Miscellaneous options...", MENU, .menu = &miscellaneousMenu },
+            { "Save settings", METHOD, .method = &RosalinaMenu_SaveSettings },
+            { "Return To Home Menu", METHOD, .method = &RosalinaMenu_ReturnToHomeMenu },
+            { "Power off / reboot", METHOD, .method = &RosalinaMenu_PowerOffOrReboot },
+            { "System info", METHOD, .method = &RosalinaMenu_ShowSystemInfo },
+            { "Credits", METHOD, .method = &RosalinaMenu_ShowCredits },
+            { "Debug info", METHOD, .method = &RosalinaMenu_ShowDebugInfo, .visibility = &rosalinaMenuShouldShowDebugInfo },
+            {},
+        }
+    };
+    memcpy(&rosalinaMenu, &rosalinaMenuTmp, sizeof(rosalinaMenu));
 
     menuReadScreenTypes();
 

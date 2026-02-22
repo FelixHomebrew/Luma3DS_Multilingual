@@ -29,12 +29,6 @@
 #include "menus.h"
 #include "menu.h"
 #include "draw.h"
-#include "menus/process_list.h"
-#include "menus/n3ds.h"
-#include "menus/debugger.h"
-#include "menus/miscellaneous.h"
-#include "menus/sysconfig.h"
-#include "menus/screen_filters.h"
 #include "plugin.h"
 #include "ifile.h"
 #include "memory.h"
@@ -42,27 +36,8 @@
 #include "process_patches.h"
 #include "luma_config.h"
 
-Menu rosalinaMenu = {
-    "Rosalina menu",
-    {
-        { "Take screenshot", METHOD, .method = &RosalinaMenu_TakeScreenshot },
-        { "Screen filters...", MENU, .menu = &screenFiltersMenu },
-        { "Cheats...", METHOD, .method = &RosalinaMenu_Cheats },
-        { "", METHOD, .method = PluginLoader__MenuCallback},
-        { "New 3DS menu...", MENU, .menu = &N3DSMenu, .visibility = &menuCheckN3ds },
-        { "Process list", METHOD, .method = &RosalinaMenu_ProcessList },
-        { "Debugger options...", MENU, .menu = &debuggerMenu },
-        { "System configuration...", MENU, .menu = &sysconfigMenu },
-        { "Miscellaneous options...", MENU, .menu = &miscellaneousMenu },
-        { "Save settings", METHOD, .method = &RosalinaMenu_SaveSettings },
-        { "Return To Home Menu", METHOD, .method = &RosalinaMenu_ReturnToHomeMenu },
-        { "Power off / reboot", METHOD, .method = &RosalinaMenu_PowerOffOrReboot },
-        { "System info", METHOD, .method = &RosalinaMenu_ShowSystemInfo },
-        { "Credits", METHOD, .method = &RosalinaMenu_ShowCredits },
-        { "Debug info", METHOD, .method = &RosalinaMenu_ShowDebugInfo, .visibility = &rosalinaMenuShouldShowDebugInfo },
-        {},
-    }
-};
+// Init strings later
+Menu rosalinaMenu;
 
 bool rosalinaMenuShouldShowDebugInfo(void)
 {

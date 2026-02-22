@@ -41,6 +41,8 @@
 #include "fmt.h"
 #include "fatfs/sdmmc/sdmmc.h"
 
+#include "lang9.h"
+
 extern u8 __itcm_start__[], __itcm_lma__[], __itcm_bss_start__[], __itcm_end__[];
 
 extern CfgData configData;
@@ -136,29 +138,32 @@ void main(int argc, char **argv, u32 magicWord)
     mcuFwVersion = ((u16)mcuFwVerHi << 16) | mcuFwVerLo;
 
     // Check if fw is older than factory. See https://www.3dbrew.org/wiki/MCU_Services#MCU_firmware_versions for a table
-    if (mcuFwVerHi < 1) error("Unsupported MCU FW version %d.%d.", (int)mcuFwVerHi, (int)mcuFwVerLo);
+    if (mcuFwVerHi < 1) error(lumaTranslGet(LLID_ERRGEN_MISC_MAIN_MCUFWWRONG), (int)mcuFwVerHi, (int)mcuFwVerLo);
+    // Will always remains english here, SD and CRTNAND are not mounted yet...
 
     I2C_readRegBuf(I2C_DEV_MCU, 0x7F, mcuConsoleInfo, 9);
 
-    if(isInvalidLoader) error("Launched using an unsupported loader.");
+    if(isInvalidLoader) error(lumaTranslGet(LLID_ERRGEN_MISC_MAIN_LOADERWRONG));
 
     installArm9Handlers();
 
+
+    const char* mountErrFmt = lumaTranslGet(LLID_ERRGEN_MISC_MAIN_MOUNTFAIL);
     if(memcmp(launchedPath, u"sdmc", 8) == 0)
     {
-        if(!mountSdCardPartition(true)) error("Failed to mount SD.");
+        if(!mountSdCardPartition(true)) error(mountErrFmt, lumaTranslGet(LLID_ERRGEN_MISC_MAIN_MOUNTFAIL_SD));
         isSdMode = true;
     }
     else if(memcmp(launchedPath, u"nand", 8) == 0)
     {
-        if(!remountCtrNandPartition(true)) error("Failed to mount CTRNAND.");
+        if(!remountCtrNandPartition(true)) error(mountErrFmt, lumaTranslGet(LLID_ERRGEN_MISC_MAIN_MOUNTFAIL_CTRNAND));
         isSdMode = false;
     }
     else if(bootType == NTR || memcmp(launchedPath, u"firm", 8) == 0)
     {
         if(mountSdCardPartition(true)) isSdMode = true;
         else if(remountCtrNandPartition(true)) isSdMode = false;
-        else error("Failed to mount SD and CTRNAND.");
+        else error(mountErrFmt, lumaTranslGet(LLID_ERRGEN_MISC_MAIN_MOUNTFAIL_BOTH));
 
         if(bootType == NTR)
         {
@@ -176,7 +181,7 @@ void main(int argc, char **argv, u32 magicWord)
             mountPoint[i] = (char)launchedPath[i];
         mountPoint[i] = 0;
 
-        error("Launched from an unsupported location: %s.", mountPoint);
+        error(lumaTranslGet(LLID_ERRGEN_MISC_MAIN_LAUNCHLCWRONG), mountPoint);
     }
 
     detectAndProcessExceptionDumps();
@@ -352,7 +357,7 @@ boot:
     {
         locateEmuNand(&nandType, &emunandIndex, true);
         if(nandType == FIRMWARE_EMUNAND && (*(vu16 *)(SDMMC_BASE + REG_SDSTATUS0) & TMIO_STAT0_WRPROTECT) == 0) //Make sure the SD card isn't write protected
-            error("The SD card is locked, EmuNAND can not be used.\nPlease turn the write protection switch off.");
+            error(lumaTranslGet(LLID_ERRGEN_MISC_MAIN_SDLOCKED));
     }
 
     ctrNandLocation = nandType; // for CTRNAND partition
@@ -391,7 +396,7 @@ boot:
             break;
     }
 
-    if(res != 0) error("Failed to apply %u FIRM patch(es).", res);
+    if(res != 0) error(lumaTranslGet(LLID_ERRGEN_MISC_MAIN_FIRMPATCHES), res);
 
     unmountPartitions();
     if(bootType != FIRMLAUNCH) deinitScreens();

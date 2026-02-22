@@ -722,7 +722,7 @@ static bool writeLumaIniConfig(void)
 
     // FIXME: this is UB we should port snprintf sometime (as well as fix other tech debt)
     if (n + 1 >= sizeof(tmpIniBuffer)) {
-        error("Configuration data buffer overflow, please report this issue");
+        error(lumaTranslGet(LLID_BOOTCFG_ERROR_OVERFLOW));
         __builtin_unreachable();
     }
 
@@ -854,7 +854,7 @@ void writeConfig(bool isConfigOptions)
         writeConfigMcu();
 
     if(updateIni && !writeLumaIniConfig())
-        error("Error writing the configuration file");
+        error(lumaTranslGet(LLID_BOOTCFG_ERROR_SAVE));
 }
 
 static const char* getLanguage() {
@@ -1231,7 +1231,7 @@ const char *optionsDescription[]  = {   lumaTranslGet(LLID_BOOTCFG_OPT_EMUNAUTOB
     else if(oldPinStatus)
     {
         if(!fileDelete(PIN_FILE))
-            error("Unable to delete PIN file");
+            error(lumaTranslGet(LLID_BOOTCFG_ERROR_PINDEL));
     }
 
     while(HID_PAD & PIN_BUTTONS);

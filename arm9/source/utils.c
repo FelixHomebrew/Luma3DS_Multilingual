@@ -38,6 +38,8 @@
 #include "memory.h"
 #include "fs.h"
 
+#include "lang9.h"
+
 void startChrono(void)
 {
     static bool isChronoStarted = false;
@@ -149,9 +151,9 @@ void error(const char *fmt, ...)
     va_end(args);
 
     initScreens();
-    drawString(true, 10, 10, COLOR_RED, "An error has occurred:");
+    drawString(true, 10, 10, COLOR_RED, lumaTranslGet(LLID_ERRGEN_TITLE));
     u32 posY = drawString(true, 10, 30, COLOR_WHITE, buf);
-    drawString(true, 10, posY + 2 * SPACING_Y, COLOR_WHITE, "Press any button to shutdown");
+    drawString(true, 10, posY + 2 * SPACING_Y, COLOR_WHITE, lumaTranslGet(LLID_ERRGEN_FOOTER));
 
     waitInput(false);
 

@@ -126,6 +126,9 @@ Result GetSystemInfoHook(s64 *out, s32 type, s32 param)
                 case 0x10E:
                     *out = (s64)cfwInfo.bottomScreenFilter.colorCurveCorrection;
                     break;
+                case 0x10F:
+                    memcpy(out, cfwInfo.language, sizeof(Iso6391));
+                    break;
                 case 0x180:
                     *out = cfwInfo.pluginLoaderFlags;
                     break;

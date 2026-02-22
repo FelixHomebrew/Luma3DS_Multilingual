@@ -137,6 +137,8 @@ typedef struct ScreenFiltersCfgData {
     s64 brightnessEnc;
 } ScreenFiltersCfgData;
 
+typedef char Iso6391[3];
+
 typedef struct CfwInfo
 {
     char magic[4];
@@ -164,6 +166,8 @@ typedef struct CfwInfo
     u8 autobootCtrAppmemtype;
 
     u16 launchedPath[80+1];
+
+    Iso6391 language;
 } CfwInfo;
 
 extern CfwInfo cfwInfo;

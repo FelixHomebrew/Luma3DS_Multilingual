@@ -42,6 +42,8 @@
 #include "arm9_exception_handlers.h"
 #include "large_patches.h"
 
+#include "lang9.h"
+
 #define K11EXT_VA         0x70000000
 
 extern u16 launchedPath[];
@@ -51,7 +53,7 @@ u8 *getProcess9Info(u8 *pos, u32 size, u32 *process9Size, u32 *process9MemAddr)
 {
     u8 *temp = memsearch(pos, "NCCH", size, 4);
 
-    if(temp == NULL) error("Failed to get Process9 data.");
+    if(temp == NULL) error(lumaTranslGet(LLID_ERRGEN_MISC_PATCHES_GETPROC9));
 
     Cxi *off = (Cxi *)(temp - 0x100);
 
@@ -76,7 +78,7 @@ u32 *getKernel11Info(u8 *pos, u32 size, u32 *baseK11VA, u8 **freeK11Space, u32 *
     static const u8 pattern[] = {0x00, 0xB0, 0x9C, 0xE5};
     *arm11ExceptionsPage = (u32 *)memsearch(pos, pattern, size, sizeof(pattern));
 
-    if(*arm11ExceptionsPage == NULL) error("Failed to get Kernel11 data.");
+    if(*arm11ExceptionsPage == NULL) error(lumaTranslGet(LLID_ERRGEN_MISC_PATCHES_GETK11));
 
     u32 *arm11SvcTable;
 
@@ -156,6 +158,8 @@ u32 installK11Extension(u8 *pos, u32 size, bool needToInitSd, u32 baseK11VA, u32
             u8 autobootCtrAppmemtype;
 
             u16 launchedPath[80+1];
+
+            Iso6391 language;
         } info;
     };
 
@@ -239,6 +243,7 @@ u32 installK11Extension(u8 *pos, u32 size, bool needToInitSd, u32 baseK11VA, u32
     info->versionMajor = VERSION_MAJOR;
     info->versionMinor = VERSION_MINOR;
     info->versionBuild = VERSION_BUILD;
+    memcpy(info->language, configData.language, sizeof(Iso6391));
 
     if(ISRELEASE) info->flags = 1;
     if(ISN3DS) info->flags |= 1 << 4;

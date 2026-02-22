@@ -35,6 +35,8 @@
 #include "menus/sysconfig.h"
 #include "plugin/plgloader.h"
 
+#include "lang11.h"
+
 typedef struct CfgData {
     u16 formatVersionMajor, formatVersionMinor;
 
@@ -52,6 +54,8 @@ typedef struct CfgData {
 
     u64 autobootTwlTitleId;
     u8 autobootCtrAppmemtype;
+
+    Iso6391 language;
 } CfgData;
 
 bool saveSettingsRequest = false;
@@ -167,6 +171,7 @@ static size_t LumaConfig_SaveLumaIniConfigToStr(char *out, const CfgData *cfg)
         lumaVerStr, lumaRevSuffixStr,
 
         (int)cfg->formatVersionMajor, (int)cfg->formatVersionMinor,
+        cfg->language,
         (int)CONFIG(AUTOBOOTEMU), (int)CONFIG(LOADEXTFIRMSANDMODULES),
         (int)CONFIG(PATCHGAMES), (int)CONFIG(REDIRECTAPPTHREADS),
         (int)CONFIG(PATCHVERSTRING), (int)CONFIG(SHOWGBABOOT),
@@ -241,6 +246,9 @@ Result LumaConfig_SaveSettings(void)
 
     svcGetSystemInfo(&out, 0x10000, 0x203);
     isSdMode = (bool)out;
+
+    svcGetSystemInfo(&out, 0x10000, 0x10F);
+    strcpy(configData.language, (const char*)&out);
 
     configData.formatVersionMajor = (u16)(formatVersion >> 16);
     configData.formatVersionMinor = (u16)formatVersion;

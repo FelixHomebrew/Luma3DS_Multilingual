@@ -10,6 +10,8 @@
 #include "sleep.h"
 #include "task_runner.h"
 
+#include "lang11.h"
+
 #define PLGLDR_VERSION (SYSTEM_VERSION(1, 0, 2))
 
 #define THREADVARS_MAGIC  0x21545624 // !TV$
@@ -81,13 +83,13 @@ void        PluginLoader__MenuCallback(void)
 
 void        PluginLoader__UpdateMenu(void)
 {
-    static const char *status[2] =
-    {
-        "Plugin Loader: [Disabled]",
-        "Plugin Loader: [Enabled]"
-    };
-
-    rosalinaMenu.items[3].title = status[PluginLoaderCtx.isEnabled];
+    static char status[MAX_STRLEN];
+    memset(status, 0, sizeof(status));
+    sprintf(
+        status, Lang11_Get(SID_MENU_ROOT_ENTRY_PLUGINLDR),
+        Lang11_Get(PluginLoaderCtx.isEnabled ? SID_MENU_ROOT_ENTRY_PLUGINLDR_YES : SID_MENU_ROOT_ENTRY_PLUGINLDR_NO)
+    );
+    rosalinaMenu.items[3].title = status;
 }
 
 static ControlApplicationMemoryModeOverrideConfig g_memorymodeoverridebackup = { 0 };

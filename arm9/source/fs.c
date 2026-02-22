@@ -57,7 +57,7 @@ static bool switchToMainDir(bool isSd)
         {
             if (f_mkdir(mainDir) != FR_OK)
             {
-                error("Failed to create luma directory.");
+                error(lumaTranslGet(LLID_ERRGEN_MISC_FS_MKDIRLUMA));
                 return false;
             }
             return switchToMainDir(isSd);
