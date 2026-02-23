@@ -33,6 +33,8 @@
 #include "draw.h"
 #include "redshift/colorramp.h"
 
+#include "lang11.h"
+
 typedef union {
     struct {
         u8 r;
@@ -150,23 +152,23 @@ static void ScreenFiltersMenu_UpdateEntries(void)
 {
     if (topScreenFilter.colorCurveCorrection == 0)
     {
-        screenFiltersMenu.items[10].title = "[IPS recommended] Enhance top screen colors";
+        screenFiltersMenu.items[10].title = Lang11_Get(SID_MENU_SCREENFILTERS_ENTRY_ENHANCETOP);
         screenFiltersMenu.items[10].method = &ScreenFiltersMenu_SetTopScreenSrgbColorCurve;
     }
     else
     {
-        screenFiltersMenu.items[10].title = "Restore top screen color curve";
+        screenFiltersMenu.items[10].title = Lang11_Get(SID_MENU_SCREENFILTERS_ENTRY_RESTORETOP);
         screenFiltersMenu.items[10].method = &ScreenFiltersMenu_RestoreTopScreenColorCurve;
     }
 
     if (bottomScreenFilter.colorCurveCorrection == 0)
     {
-        screenFiltersMenu.items[11].title = "[IPS recommended] Enhance bottom screen colors";
+        screenFiltersMenu.items[11].title = Lang11_Get(SID_MENU_SCREENFILTERS_ENTRY_ENHANCEBOT);
         screenFiltersMenu.items[11].method = &ScreenFiltersMenu_SetBottomScreenSrgbColorCurve;
     }
     else
     {
-        screenFiltersMenu.items[11].title = "Restore bottom screen color curve";
+        screenFiltersMenu.items[11].title = Lang11_Get(SID_MENU_SCREENFILTERS_ENTRY_RESTOREBOT);
         screenFiltersMenu.items[11].method = &ScreenFiltersMenu_RestoreBottomScreenColorCurve;
     }
 }
@@ -181,25 +183,8 @@ static void ScreenFiltersMenu_SetColorCurveCorrection(bool top, u8 colorCurveCor
     ScreenFiltersMenu_UpdateEntries();
 }
 
-Menu screenFiltersMenu = {
-    "Screen filters menu",
-    {
-        { "[6500K] Default temperature", METHOD, .method = &ScreenFiltersMenu_SetDefault },
-        { "[10000K] Aquarium", METHOD, .method = &ScreenFiltersMenu_SetAquarium },
-        { "[7500K] Overcast Sky", METHOD, .method = &ScreenFiltersMenu_SetOvercastSky },
-        { "[5500K] Daylight", METHOD, .method = &ScreenFiltersMenu_SetDaylight },
-        { "[4200K] Fluorescent", METHOD, .method = &ScreenFiltersMenu_SetFluorescent },
-        { "[3400K] Halogen", METHOD, .method = &ScreenFiltersMenu_SetHalogen },
-        { "[2700K] Incandescent", METHOD, .method = &ScreenFiltersMenu_SetIncandescent },
-        { "[2300K] Warm Incandescent", METHOD, .method = &ScreenFiltersMenu_SetWarmIncandescent },
-        { "[1900K] Candle", METHOD, .method = &ScreenFiltersMenu_SetCandle },
-        { "[1200K] Ember", METHOD, .method = &ScreenFiltersMenu_SetEmber },
-        { "[IPS recommended] Enhance top screen colors", METHOD, .method = &ScreenFiltersMenu_SetTopScreenSrgbColorCurve },
-        { "[IPS recommended] Enhance bottom screen colors", METHOD, .method = &ScreenFiltersMenu_SetTopScreenSrgbColorCurve },
-        { "Advanced configuration...", METHOD, .method = &ScreenFiltersMenu_AdvancedConfiguration },
-        {},
-    }
-};
+// Init strings later
+Menu screenFiltersMenu;
 
 #define DEF_CCT_SETTER(temp, name)\
 void ScreenFiltersMenu_Set##name(void)\

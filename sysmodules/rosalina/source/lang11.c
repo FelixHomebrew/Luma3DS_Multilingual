@@ -66,7 +66,24 @@ static const char* sidTable[] = {
     "ROSALINA_MENU_SCREENSHOT_BODY_SUCCESS",
     "ROSALINA_MENU_SCREENSHOT_BODY_TIMECONVERT",
     "ROSALINA_MENU_SCREENSHOT_BODY_TIMEWRITE",
-    "ROSALINA_MENU_SCREENSHOT_BODY_FAILURE"
+    "ROSALINA_MENU_SCREENSHOT_BODY_FAILURE",
+
+    "ROSALINA_MENU_SCREENFILTERS_TITLE",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_6500K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_10000K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_7500K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_5500K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_4200K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_3400K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_2700K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_2300K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_2900K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_1200K",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_ENHANCETOP",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_ENHANCEBOT",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_RESTORETOP",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_RESTOREBOT",
+    "ROSALINA_MENU_SCREENFILTERS_ENTRY_ADVANCED"
 };
 
 static const Iso6391 strBuiltinI = "en";
@@ -92,7 +109,24 @@ static const char* strBuiltinV[STRCOUNT] = {
     "Operation succeeded.",
     "Time spent converting:",
     "Time spent writing files:",
-    "Operation failed (0x%08lx)."
+    "Operation failed (0x%08lx).",
+
+    "Screen filters menu",
+    "[%huK] Default temperature",
+    "[%huK] Aquarium",
+    "[%huK] Overcast Sky",
+    "[%huK] Daylight",
+    "[%huK] Fluorescent",
+    "[%huK] Halogen",
+    "[%huK] Incandescent",
+    "[%huK] Warm Incandescent",
+    "[%huK] Candle",
+    "[%huK] Ember",
+    "[IPS recommended] Enhance top screen colors",
+    "[IPS recommended] Enhance bottom screen colors",
+    "Restore top screen color curve",
+    "Restore bottom screen color curve",
+    "Advanced configuration..."
 };
 
 static Iso6391 curLang = {0};

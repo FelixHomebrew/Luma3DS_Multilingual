@@ -398,6 +398,37 @@ void menuThreadMain(void)
     };
     memcpy(&rosalinaMenu, &rosalinaMenuTmp, sizeof(rosalinaMenu));
 
+    static const u16 temps[] = { 6500, 10000, 7500, 5500, 4200, 3400, 2700, 2300, 1900, 1200 };
+    #define TEMPS_COUNT (sizeof(temps)/sizeof(temps[0]))
+
+    static char bufs[TEMPS_COUNT][GSP_SCREEN_HEIGHT_BOTTOM/SPACING_X];
+    memset(bufs, 0, sizeof(bufs));
+
+    for (u8 i = 0; i < TEMPS_COUNT; i++)
+        sprintf(bufs[i], Lang11_Get(SID_MENU_SCREENFILTERS_ENTRY_6500K+i), temps[i]);
+    #undef TEMPS_COUNT
+
+    Menu screenFiltersMenuTmp = {
+        Lang11_Get(SID_MENU_SCREENFILTERS_TITLE),
+        {
+            { bufs[0], METHOD, .method = &ScreenFiltersMenu_SetDefault },
+            { bufs[1], METHOD, .method = &ScreenFiltersMenu_SetAquarium },
+            { bufs[2], METHOD, .method = &ScreenFiltersMenu_SetOvercastSky },
+            { bufs[3], METHOD, .method = &ScreenFiltersMenu_SetDaylight },
+            { bufs[4], METHOD, .method = &ScreenFiltersMenu_SetFluorescent },
+            { bufs[5], METHOD, .method = &ScreenFiltersMenu_SetHalogen },
+            { bufs[6], METHOD, .method = &ScreenFiltersMenu_SetIncandescent },
+            { bufs[7], METHOD, .method = &ScreenFiltersMenu_SetWarmIncandescent },
+            { bufs[8], METHOD, .method = &ScreenFiltersMenu_SetCandle },
+            { bufs[9], METHOD, .method = &ScreenFiltersMenu_SetEmber },
+            { Lang11_Get(SID_MENU_SCREENFILTERS_ENTRY_ENHANCETOP), METHOD, .method = &ScreenFiltersMenu_SetTopScreenSrgbColorCurve },
+            { Lang11_Get(SID_MENU_SCREENFILTERS_ENTRY_ENHANCEBOT), METHOD, .method = &ScreenFiltersMenu_SetTopScreenSrgbColorCurve },
+            { Lang11_Get(SID_MENU_SCREENFILTERS_ENTRY_ADVANCED), METHOD, .method = &ScreenFiltersMenu_AdvancedConfiguration },
+            {},
+        }
+    };
+    memcpy(&screenFiltersMenu, &screenFiltersMenuTmp, sizeof(screenFiltersMenu));
+    
     menuReadScreenTypes();
 
     while(!preTerminationRequested)
