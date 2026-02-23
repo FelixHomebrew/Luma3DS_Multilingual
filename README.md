@@ -1,4 +1,6 @@
-# Luma3DS
+# Luma3DS Multilingual
+Go to the [`transl`](https://github.com/FelixHomebrew/Luma3DS_Multilingual/tree/transl) branch
+___
 
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/LumaTeam/Luma3DS/total)
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
