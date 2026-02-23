@@ -135,13 +135,13 @@ static const char* llidTable[] = {
 
     "ERRGEN_MISC_FS_MKDIRLUMA",
 
-    "ERRGEN_MISC_MAIN_MCUFWWRONG",
+    /*"ERRGEN_MISC_MAIN_MCUFWWRONG",
     "ERRGEN_MISC_MAIN_LOADERWRONG",
     "ERRGEN_MISC_MAIN_MOUNTFAIL",
     "ERRGEN_MISC_MAIN_MOUNTFAIL_SD",
     "ERRGEN_MISC_MAIN_MOUNTFAIL_CTRNAND",
     "ERRGEN_MISC_MAIN_MOUNTFAIL_BOTH",
-    "ERRGEN_MISC_MAIN_LAUNCHLCWRONG",
+    "ERRGEN_MISC_MAIN_LAUNCHLCWRONG",*/
     "ERRGEN_MISC_MAIN_SDLOCKED",
     "ERRGEN_MISC_MAIN_FIRMPATCHES",
 
@@ -342,10 +342,6 @@ static char* lumaTranslBuiltinV[] = {
 
     "Failed to create luma directory.",
 
-    "Unsupported MCU FW version %d.%d.",
-    "Launched using an unsupported loader.",
-    "Failed to mount %s.", "SD", "CTRNAND", "SD and CTRNAND",
-    "Launched from an unsupported location: %s.",
     "The SD card is locked, EmuNAND can not be used.\nPlease turn the write protection switch off.",
     "Failed to apply %u FIRM patch(es).",
 
