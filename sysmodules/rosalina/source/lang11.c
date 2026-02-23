@@ -50,7 +50,23 @@ static const char* sidTable[] = {
     "ROSALINA_MENU_ROOT_ENTRY_PLUGINLDR",
     "ROSALINA_MENU_ROOT_ENTRY_PLUGINLDR_YES",
     "ROSALINA_MENU_ROOT_ENTRY_PLUGINLDR_NO",
-    "ROSALINA_MENU_ROOT_ENTRY_NEW3DS"
+    "ROSALINA_MENU_ROOT_ENTRY_NEW3DS",
+    "ROSALINA_MENU_ROOT_ENTRY_PROCLIST",
+    "ROSALINA_MENU_ROOT_ENTRY_DEBUGOPTS",
+    "ROSALINA_MENU_ROOT_ENTRY_SYSTEMCFG",
+    "ROSALINA_MENU_ROOT_ENTRY_MISCELLANEOUS",
+    "ROSALINA_MENU_ROOT_ENTRY_SAVESETTINGS",
+    "ROSALINA_MENU_ROOT_ENTRY_RETURNHOME",
+    "ROSALINA_MENU_ROOT_ENTRY_POWOFFRESET",
+    "ROSALINA_MENU_ROOT_ENTRY_SYSTEMINFO",
+    "ROSALINA_MENU_ROOT_ENTRY_CREDITS",
+    "ROSALINA_MENU_ROOT_ENTRY_DEBUGINFO",
+
+    "ROSALINA_MENU_SCREENSHOT_TITLE",
+    "ROSALINA_MENU_SCREENSHOT_BODY_SUCCESS",
+    "ROSALINA_MENU_SCREENSHOT_BODY_TIMECONVERT",
+    "ROSALINA_MENU_SCREENSHOT_BODY_TIMEWRITE",
+    "ROSALINA_MENU_SCREENSHOT_BODY_FAILURE"
 };
 
 static const Iso6391 strBuiltinI = "en";
@@ -60,7 +76,23 @@ static const char* strBuiltinV[STRCOUNT] = {
     "Screen filters...",
     "Cheats...",
     "Plugin Loader: [%s]", "Enabled", "Disabled",
-    "New 3DS menu..."
+    "New 3DS menu...",
+    "Process list",
+    "Debugger options...",
+    "System configuration...",
+    "Miscellaneous options...",
+    "Save settings",
+    "Return To Home Menu",
+    "Power off / reboot",
+    "System info",
+    "Credits",
+    "Debug info",
+
+    "Screenshot",
+    "Operation succeeded.",
+    "Time spent converting:",
+    "Time spent writing files:",
+    "Operation failed (0x%08lx)."
 };
 
 static Iso6391 curLang = {0};

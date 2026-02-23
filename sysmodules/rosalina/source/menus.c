@@ -36,6 +36,10 @@
 #include "process_patches.h"
 #include "luma_config.h"
 
+#include "lang11.h"
+
+#define MAX(X,Y) (((X) > (Y)) ? (X) : (Y))
+
 // Init strings later
 Menu rosalinaMenu;
 
@@ -388,17 +392,25 @@ end:
     do
     {
         Draw_Lock();
-        Draw_DrawString(10, 10, COLOR_TITLE, "Screenshot");
+        Draw_DrawString(10, 10, COLOR_TITLE, Lang11_Get(SID_MENU_SCREENSHOT_TITLE));
         if(R_FAILED(res))
-            Draw_DrawFormattedString(10, 30, COLOR_WHITE, "Operation failed (0x%08lx).", (u32)res);
+            Draw_DrawFormattedString(10, 30, COLOR_WHITE, Lang11_Get(SID_MENU_SCREENSHOT_BODY_FAILURE), (u32)res);
         else
         {
             u32 t1 = (u32)(1000 * timeSpentConvertingScreenshot / SYSCLOCK_ARM11);
             u32 t2 = (u32)(1000 * timeSpentWritingScreenshot / SYSCLOCK_ARM11);
             u32 posY = 30;
-            posY = Draw_DrawString(10, posY, COLOR_WHITE, "Operation succeeded.\n\n");
-            posY = Draw_DrawFormattedString(10, posY, COLOR_WHITE, "Time spent converting:    %5lums\n", t1);
-            posY = Draw_DrawFormattedString(10, posY, COLOR_WHITE, "Time spent writing files: %5lums\n", t2);
+            posY = Draw_DrawFormattedString(10, posY, COLOR_WHITE, Lang11_Get(SID_MENU_SCREENSHOT_BODY_SUCCESS));
+            posY = Draw_DrawString         (10, posY, COLOR_WHITE, "\n\n");
+
+            const char *timeConv  = Lang11_Get(SID_MENU_SCREENSHOT_BODY_TIMECONVERT),
+                       *timeWrite = Lang11_Get(SID_MENU_SCREENSHOT_BODY_TIMEWRITE);
+            const u16 rpadL = MAX(strlen(timeConv), strlen(timeWrite));
+            char timeBothFmt[MAX_STRLEN+9];
+            sprintf(timeBothFmt, "%%-%hus %%5lums\n", rpadL);
+
+            posY = Draw_DrawFormattedString(10, posY, COLOR_WHITE, timeBothFmt, timeConv, t1);
+            posY = Draw_DrawFormattedString(10, posY, COLOR_WHITE, timeBothFmt, timeWrite, t2);
         }
 
         Draw_FlushFramebuffer();
