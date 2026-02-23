@@ -1,6 +1,18 @@
-# Work in progress
+## Luma3DS Multilingual
 **This feature is currently not done yet and is in experimental phase.**<br>
-For now, it is only able to translate UIs from ARM9, including boot configuration and chainloader menus. Rosalina isn't yet integrated into the translation framework.
+
+This unofficial modification of Luma3DS includes an external translation support for its user interface. Allowing non-English speakers to have a better experience with Luma3DS, without need to re-compile the source, patch the binary, or switch between different translated builds.
+
+Luma3DS's language can be selected from the boot configuration menu (hold SELECT at boot).
+
+## About language files
+Language files are structured as INIs (template will be ready once all strings are included in the translator), they must be stored under `SD:/luma/langs` directory (or `CTRNAND:/rw/luma/langs` if booted on CTRNAND), and their name must be 5 chars long (Eg: `de.ini`, `es.ini`, ...). Their basename'll be used as identifier; Althrough symbols are allowed, prefer naming them by their respective ISO 639-1 code.
+
+**They should be written in CP437 / DOS text encoding**, which is the encoding used by Luma3DS internal font. Using another one would display unexpected symbols in the UI, especially with accented characters.<br>If you're using Visual Studio Code, just click on Text Encoding button at bottom right (labeled "UTF-8" by default) → "Save with Encoding" → "DOS (CP 437)".
+
+## Preview screenshot
+- Configuration screen with the added language option, shown with french selected:
+![Boot menu translated screenshot](/img/boot_menu_translated.png)
 
 ___
 
